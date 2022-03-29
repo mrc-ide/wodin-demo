@@ -1,0 +1,9 @@
+{
+  "name": "wodin-demo",
+  "scripts": {
+    "serve": "npx wodin --config=$(realpath \"$(dirname $0)\")/config"
+  },
+  "dependencies": {
+    "wodin": "^0.1.3"
+  }
+}
