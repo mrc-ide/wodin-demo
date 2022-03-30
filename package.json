@@ -4,6 +4,6 @@
     "serve": "npx wodin --config=$(realpath \"$(dirname $0)\")/config"
   },
   "dependencies": {
-    "wodin": "^0.1.3"
+    "wodin": "^0.1.4"
   }
 }
