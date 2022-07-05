@@ -6,13 +6,13 @@ Spin up the [odin.api](https://github.com/mrc-ide/odin.api) server on a docker p
 
 ```
 docker network create wodin_nw
-docker run -d --name odin.api --rm \
+docker run -d --pull=always --name odin.api --rm \
     --network=wodin_nw \
     mrcide/odin.api:main
-docker run -d --name wodin --rm \
+docker run -d --pull=always --name wodin --rm \
     -p 3000:3000 --network=wodin_nw \
     -v $PWD/config:/config:ro \
-    mrcide/wodin:4407379 /config
+    mrcide/wodin:mrc-3374 /config
 ```
 
 The demo app will be available at http://localhost:3000
