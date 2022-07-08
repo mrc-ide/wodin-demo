@@ -9,7 +9,7 @@ docker network create wodin_nw
 docker run -d --pull=always --name odin.api --rm \
     --network=wodin_nw \
     mrcide/odin.api:main
-docker run -it --pull=always --name wodin --rm \
+docker run -d --pull=always --name wodin --rm \
     -p 3000:3000 --network=wodin_nw \
     -v $PWD/config:/config:ro \
     mrcide/wodin:main /config
@@ -20,7 +20,7 @@ The demo app will be available at http://localhost:3000
 To use the builtin demo config, you can omit the `-v` and `/config` parts
 
 ```
-docker run -it --pull=always --name wodin --rm \
+docker run -d --pull=always --name wodin --rm \
     -p 3000:3000 --network=wodin_nw \
     mrcide/wodin:main
 ```
