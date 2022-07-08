@@ -31,11 +31,13 @@ In a production setting we would not expose port 3000 at all, but add a proxy to
 
 ## On metal
 
-Bring up odin.api much as before, but this time we expose the port to the host
+We can also run wodin on metal, without a docker container, with a few tweaks.
+
+Bring up odin.api much as before, but this time we expose odin.api port to the host
 
 ```
 docker run -d --name odin.api --rm \
-    -p 8001:8001
+    -p 8001:8001 \
     mrcide/odin.api:main
 ```
 
