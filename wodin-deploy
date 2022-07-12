@@ -23,7 +23,7 @@ function wodin_pull {
 }
 
 function wodin_down {
-    docker stop $API_NAME $APP_NAME $PROXY_NAME
+    docker stop $API_NAME $APP_NAME $PROXY_NAME || /bin/true
     docker network rm $NETWORK
 }
 
