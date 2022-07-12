@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+ROOT=$(realpath $(dirname $0))
+
+echo "Refreshing image"
+docker pull mrcide/wodin:main
+
+echo "Copying files"
+docker create --name wodin-update-config mrcide/wodin:main > /dev/null
+rm -rf "$ROOT/config"
+docker cp wodin-update-config:/wodin/config "$ROOT/config"
+docker rm wodin-update-config > /dev/null
+
+echo "Updating styles"
+
+# Make the demo visually identifiable
+sed -i 's/#ce4910/#00a3ba/' $ROOT/config/files/index/index.css
+sed -i 's/localhost/odin.api/' $ROOT/config/wodin.config.json
+cp $ROOT/extra/reside_logo.png $ROOT/config/files/index/reside_logo.png
+
+echo "Done!"

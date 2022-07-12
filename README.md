@@ -62,3 +62,13 @@ run run serve
 The demo app will be available at http://localhost:3000
 
 This requires that the npm package has been updated recently (not currently part of our workflows).
+
+## Update local copy of configuration
+
+Run
+
+```
+./update-config
+```
+
+to refresh the configuration in `/config` with that from the app, but with a sparkly new custom css and logo.
