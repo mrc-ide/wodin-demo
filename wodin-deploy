@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+!/usr/bin/env bash
 set -eEuo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -16,6 +16,32 @@ PROXY_IMAGE=reside/proxy-nginx:master
 
 NETWORK=wodin-nw
 
+USAGE="Usage: $0 [--no-proxy] {up|pull|down|ssl}"
+PROXY=1
+ACTION=
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-proxy)
+            PROXY=0
+            shift
+            ;;
+        -*|--*)
+            echo "Unknown option $1"
+            exit 1
+            ;;
+        *)
+            if [ ! -z $ACTION ]; then
+                echo "Too many positional arguments"
+                echo $USAGE
+                exit 1
+            fi
+            ACTION=$1
+            shift
+            ;;
+    esac
+done
+
 function wodin_pull {
     docker pull $API_IMAGE
     docker pull $APP_IMAGE
@@ -30,6 +56,14 @@ function wodin_down {
 function wodin_up {
     docker network create $NETWORK
     docker run -d --name $API_NAME --rm --network=$NETWORK $API_IMAGE
+    if [ $PROXY == 0 ]; then
+        wodin_up_no_proxy
+    else
+        wodin_up_proxy
+    fi
+}
+
+function wodin_up_proxy {
     docker run -d --name $APP_NAME --rm --network=$NETWORK \
            -v $PWD/config:/config:ro \
            $APP_IMAGE /config
@@ -38,6 +72,12 @@ function wodin_up {
            -v $PWD/ssl/key.pem:/run/proxy/key.pem:ro \
            -p 443:443 -p 80:80 \
            $PROXY_IMAGE wodin:3000 wodin-dev.dide.ic.ac.uk 80 443
+}
+
+function wodin_up_no_proxy {
+    docker run -d --name $APP_NAME --rm --network=$NETWORK \
+           -v $PWD/config:/config:ro -p 3000:3000 \
+           $APP_IMAGE /config
 }
 
 function wodin_ssl {
@@ -49,7 +89,7 @@ function wodin_ssl {
         chmod 600 ssl/key.pem
 }
 
-case "${1-}" in
+case "$ACTION" in
     up)
         wodin_up
         ;;
@@ -63,6 +103,6 @@ case "${1-}" in
         wodin_down
         ;;
     *)
-        echo $"Usage: $0 {up|pull|down|ssl}"
+        echo $USAGE
         exit 1
 esac
