@@ -1,0 +1,108 @@
+!/usr/bin/env bash
+set -eEuo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+API_BRANCH="${API_BRANCH:-main}"
+APP_BRANCH="${APP_BRANCH:-main}"
+
+API_NAME=odin.api
+APP_NAME=wodin
+PROXY_NAME=proxy
+
+API_IMAGE=mrcide/odin.api:$API_BRANCH
+APP_IMAGE=mrcide/wodin:$APP_BRANCH
+PROXY_IMAGE=reside/proxy-nginx:master
+
+NETWORK=wodin-nw
+
+USAGE="Usage: $0 [--no-proxy] {up|pull|down|ssl}"
+PROXY=1
+ACTION=
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-proxy)
+            PROXY=0
+            shift
+            ;;
+        -*|--*)
+            echo "Unknown option $1"
+            exit 1
+            ;;
+        *)
+            if [ ! -z $ACTION ]; then
+                echo "Too many positional arguments"
+                echo $USAGE
+                exit 1
+            fi
+            ACTION=$1
+            shift
+            ;;
+    esac
+done
+
+function wodin_pull {
+    docker pull $API_IMAGE
+    docker pull $APP_IMAGE
+    docker pull $PROXY_IMAGE
+}
+
+function wodin_down {
+    docker stop $API_NAME $APP_NAME $PROXY_NAME || /bin/true
+    docker network rm $NETWORK
+}
+
+function wodin_up {
+    docker network create $NETWORK
+    docker run -d --name $API_NAME --rm --network=$NETWORK $API_IMAGE
+    if [ $PROXY == 0 ]; then
+        wodin_up_no_proxy
+    else
+        wodin_up_proxy
+    fi
+}
+
+function wodin_up_proxy {
+    docker run -d --name $APP_NAME --rm --network=$NETWORK \
+           -v $PWD/config:/config:ro \
+           $APP_IMAGE /config
+    docker run -d --name $PROXY_NAME --rm --network=$NETWORK \
+           -v $PWD/ssl/certificate.pem:/run/proxy/certificate.pem:ro \
+           -v $PWD/ssl/key.pem:/run/proxy/key.pem:ro \
+           -p 443:443 -p 80:80 \
+           $PROXY_IMAGE wodin:3000 wodin-dev.dide.ic.ac.uk 80 443
+}
+
+function wodin_up_no_proxy {
+    docker run -d --name $APP_NAME --rm --network=$NETWORK \
+           -v $PWD/config:/config:ro -p 3000:3000 \
+           $APP_IMAGE /config
+}
+
+function wodin_ssl {
+    export VAULT_ADDR=https://vault.dide.ic.ac.uk:8200
+    export VAULT_TOKEN=$(vault login -method=github -token-only)
+    mkdir -p ssl/
+    vault read -field=cert "secret/wodin/ssl/dev" > ssl/certificate.pem
+    vault read -field=key "secret/wodin/ssl/dev" > ssl/key.pem && \
+        chmod 600 ssl/key.pem
+}
+
+case "$ACTION" in
+    up)
+        wodin_up
+        ;;
+    ssl)
+        wodin_ssl
+        ;;
+    pull)
+        wodin_pull
+        ;;
+    down)
+        wodin_down
+        ;;
+    *)
+        echo $USAGE
+        exit 1
+esac
