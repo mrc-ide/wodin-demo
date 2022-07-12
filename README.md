@@ -15,6 +15,14 @@
 ./wodin-deploy up --no-proxy
 ```
 
+## Deploying a different branch
+
+Set the `API_BRANCH` and `APP_BRANCH` environment variables to the names of the branch (or git hash) to deploy
+
+```
+API_BRANCH=mrc-1234 APP_BRANCH=mrc-1237 ./wodin-deploy up
+```
+
 ## Manual deployment
 
 Spin up the [odin.api](https://github.com/mrc-ide/odin.api) server on a docker private network, then bring up [wodin](https://github.com/mrc-ide/wodin) pointing at our configuration directory
