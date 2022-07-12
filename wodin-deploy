@@ -42,7 +42,7 @@ function wodin_ssl {
     export VAULT_ADDR=https://vault.dide.ic.ac.uk:8200
     export VAULT_TOKEN=$(vault login -method=github -token-only)
     mkdir -p ssl/
-    vault read -field=certificate "secret/wodin/ssl/dev" > ssl/certificate.pem
+    vault read -field=cert "secret/wodin/ssl/dev" > ssl/certificate.pem
     vault read -field=key "secret/wodin/ssl/dev" > ssl/key.pem && \
         chmod 600 ssl/key.pem
 }
