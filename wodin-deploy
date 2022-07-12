@@ -23,7 +23,7 @@ function wodin_pull {
 }
 
 function wodin_down {
-    docker stop -f $API_NAME $APP_NAME $PROXY_NAME
+    docker stop $API_NAME $APP_NAME $PROXY_NAME
     docker network rm $NETWORK
 }
 
@@ -34,8 +34,10 @@ function wodin_up {
            -v $PWD/config:/config:ro \
            $APP_IMAGE /config
     docker run -d --name $PROXY_NAME --rm --network=$NETWORK \
-           -v $PWD/ssl/run/proxy:ro \
-           $PROXY_IMAGE
+           -v $PWD/ssl/certificate.pem:/run/proxy/certificate.pem:ro \
+           -v $PWD/ssl/key.pem:/run/proxy/key.pem:ro \
+           -p 443:443 -p 80:80 \
+           $PROXY_IMAGE wodin:3000 wodin-dev.dide.ic.ac.uk 80 443
 }
 
 function wodin_ssl {
