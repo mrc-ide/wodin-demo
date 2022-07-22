@@ -16,7 +16,7 @@ PROXY_IMAGE=reside/proxy-nginx:master
 
 NETWORK=wodin-nw
 
-USAGE="Usage: $0 [--no-proxy] {up|pull|down|ssl}"
+USAGE="Usage: $0 [--no-proxy] {up|pull|down|redeploy|ssl}"
 PROXY=1
 ACTION=
 
@@ -49,7 +49,8 @@ function wodin_pull {
 }
 
 function wodin_down {
-    docker stop $API_NAME $APP_NAME $PROXY_NAME || /bin/true
+    # while we have no persistant data, safe to tear things down fast
+    docker kill $API_NAME $APP_NAME $PROXY_NAME || /bin/true
     docker network rm $NETWORK
 }
 
@@ -101,6 +102,11 @@ case "$ACTION" in
         ;;
     down)
         wodin_down
+        ;;
+    redeploy)
+        wodin_pull
+        wodin_down
+        wodin_up
         ;;
     *)
         echo $USAGE
