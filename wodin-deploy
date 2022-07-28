@@ -8,11 +8,15 @@ APP_BRANCH="${APP_BRANCH:-main}"
 
 API_NAME=odin.api
 APP_NAME=wodin
+REDIS_NAME=redis
 PROXY_NAME=proxy
 
 API_IMAGE=mrcide/odin.api:$API_BRANCH
 APP_IMAGE=mrcide/wodin:$APP_BRANCH
+REDIS_IMAGE=redis:6
 PROXY_IMAGE=reside/proxy-nginx:master
+
+REDIS_VOLUME=wodin-data
 
 NETWORK=wodin-nw
 
@@ -49,18 +53,22 @@ done
 function wodin_pull {
     docker pull $API_IMAGE
     docker pull $APP_IMAGE
+    docker pull $REDIS_IMAGE
     docker pull $PROXY_IMAGE
 }
 
 function wodin_down {
-    # while we have no persistant data, safe to tear things down fast
     docker kill $API_NAME $APP_NAME $PROXY_NAME || /bin/true
+    docker stop $REDIS_NAME || /bin/true
     docker network rm $NETWORK
 }
 
 function wodin_up {
+    docker volume create $REDIS_VOLUME
     docker network create $NETWORK
     docker run -d --name $API_NAME --rm --network=$NETWORK $API_IMAGE
+    docker run -d --name $REDIS_NAME --rm --network=$NETWORK \
+           -v $REDIS_VOLUME:/data $REDIS_IMAGE
     if [ $PROXY == 0 ]; then
         wodin_up_no_proxy
     else
