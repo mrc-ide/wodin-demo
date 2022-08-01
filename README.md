@@ -32,6 +32,7 @@ docker network create wodin-nw
 docker run -d --pull=always --name odin.api --rm \
     --network=wodin-nw \
     mrcide/odin.api:main
+docker run -d --name redis --rm --network=wodin-nw redis:6
 docker run -d --pull=always --name wodin --rm \
     -p 3000:3000 --network=wodin-nw \
     -v $PWD/config:/config:ro \
@@ -56,14 +57,21 @@ docker run -d --name odin.api --rm \
     mrcide/odin.api:main
 ```
 
-Edit the config/wodin.config.json to change the url of the `odinAPI` key to be `http://127.0.0.1:8001`
+You'll also need a copy of redis, also exposed to the host:
+
+```
+docker run -d --name redis --rm -p 6379:6379 redis:6
+```
+
+Edit the config/wodin.config.json to change the url of the `odinAPI` key to be `http://127.0.0.1:8001`, and the `redisURL` key to be `redis://127.0.0.1:6379`
 
 ```json
 {
     "courseTitle": "WODIN Example",
     "port": 3000,
     "appsPath": "apps",
-    "odinAPI": "http://127.0.0.1:8001"
+    "odinAPI": "http://127.0.0.1:8001",
+    "redisURL": "redis://127.0.0.1:6379"
 }
 ```
 

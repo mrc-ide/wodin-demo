@@ -2,5 +2,6 @@
     "courseTitle": "WODIN Example",
     "port": 3000,
     "appsPath": "apps",
-    "odinAPI": "http://odin.api:8001"
+    "odinAPI": "http://odin.api:8001",
+    "redisURL": "redis://redis:6379"
 }
