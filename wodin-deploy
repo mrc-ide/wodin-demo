@@ -20,16 +20,12 @@ REDIS_VOLUME=wodin-data
 
 NETWORK=wodin-nw
 
-USAGE="Usage: $0 [--no-proxy] {up|pull|down|redeploy|ssl}"
-PROXY=1
+USAGE="Usage: $0 {up|pull|down|redeploy|configure-proxy}"
 ACTION=
+PROXY_MODE=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --no-proxy)
-            PROXY=0
-            shift
-            ;;
         --help)
             echo $USAGE
             exit 0
@@ -39,13 +35,17 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            if [ ! -z $ACTION ]; then
+            if [[ $ACTION == "configure-proxy" && -z $PROXY_MODE ]]; then
+                PROXY_MODE=$1
+                shift
+            elif [ ! -z $ACTION ]; then
                 echo "Too many positional arguments"
                 echo $USAGE
                 exit 1
+            else
+                ACTION=$1
+                shift
             fi
-            ACTION=$1
-            shift
             ;;
     esac
 done
@@ -65,18 +65,20 @@ function wodin_down {
 
 function wodin_up {
     docker volume create $REDIS_VOLUME
-    docker network create $NETWORK
+    docker network create $NETWORK || /bin/true
     docker run -d --name $API_NAME --rm --network=$NETWORK $API_IMAGE
     docker run -d --name $REDIS_NAME --rm --network=$NETWORK \
            -v $REDIS_VOLUME:/data $REDIS_IMAGE
-    if [ $PROXY == 0 ]; then
-        wodin_up_no_proxy
+    if [ -f .proxy ]; then
+        PROXY_HOST=$(cat .proxy)
+        wodin_up_proxy $PROXY_HOST
     else
-        wodin_up_proxy
+        wodin_up_no_proxy
     fi
 }
 
 function wodin_up_proxy {
+    PROXY_HOST=$1
     docker run -d --name $APP_NAME --rm --network=$NETWORK \
            -v $PWD/config:/config:ro \
            $APP_IMAGE /config
@@ -84,21 +86,46 @@ function wodin_up_proxy {
            -v $PWD/ssl/certificate.pem:/run/proxy/certificate.pem:ro \
            -v $PWD/ssl/key.pem:/run/proxy/key.pem:ro \
            -p 443:443 -p 80:80 \
-           $PROXY_IMAGE wodin:3000 wodin-dev.dide.ic.ac.uk 80 443
+           $PROXY_IMAGE wodin:3000 $PROXY_HOST 80 443
+    echo "Wodin now available at https://$PROXY_HOST"
 }
 
 function wodin_up_no_proxy {
     docker run -d --name $APP_NAME --rm --network=$NETWORK \
            -v $PWD/config:/config:ro -p 3000:3000 \
            $APP_IMAGE /config
+    echo "Wodin now available at http://localhost:3000"
+}
+
+function wodin_configure_proxy {
+    case $PROXY_MODE in
+        dev)
+            echo "Using wodin-dev.dide.ic.ac.uk"
+            wodin_ssl dev
+            echo wodin-dev.dide.ic.ac.uk > .proxy
+            ;;
+        epimodels)
+            echo "Using epimodels.dide.ic.ac.uk"
+            wodin_ssl epimodels
+            echo epimodels.dide.ic.ac.uk > .proxy
+            ;;
+        *)
+            echo "Using no proxy"
+            rm -rf ssl
+            rm -f .proxy
+            ;;
+    esac
 }
 
 function wodin_ssl {
+    SSL_NAME=$1
     export VAULT_ADDR=https://vault.dide.ic.ac.uk:8200
+    echo "Authenticating with the vault"
     export VAULT_TOKEN=$(vault login -method=github -token-only)
+    echo "Copying keys"
     mkdir -p ssl/
-    vault read -field=cert "secret/wodin/ssl/dev" > ssl/certificate.pem
-    vault read -field=key "secret/wodin/ssl/dev" > ssl/key.pem && \
+    vault read -field=cert "secret/wodin/ssl/$SSL_NAME" > ssl/certificate.pem
+    vault read -field=key "secret/wodin/ssl/$SSL_NAME" > ssl/key.pem && \
         chmod 600 ssl/key.pem
 }
 
@@ -106,8 +133,8 @@ case "$ACTION" in
     up)
         wodin_up
         ;;
-    ssl)
-        wodin_ssl
+    configure-proxy)
+        wodin_configure_proxy
         ;;
     pull)
         wodin_pull
