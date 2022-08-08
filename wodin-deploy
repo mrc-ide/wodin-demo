@@ -58,14 +58,17 @@ function wodin_pull {
 }
 
 function wodin_down {
-    docker kill $API_NAME $APP_NAME $PROXY_NAME || /bin/true
+    if [ -f .proxy ]; then
+        docker kill $PROXY_NAME || /bin/true
+    fi
+    docker kill $API_NAME $APP_NAME || /bin/true
     docker stop $REDIS_NAME || /bin/true
     docker network rm $NETWORK
 }
 
 function wodin_up {
     docker volume create $REDIS_VOLUME
-    docker network create $NETWORK || /bin/true
+    docker network create $NETWORK 2>/dev/null || /bin/true
     docker run -d --name $API_NAME --rm --network=$NETWORK $API_IMAGE
     docker run -d --name $REDIS_NAME --rm --network=$NETWORK \
            -v $REDIS_VOLUME:/data $REDIS_IMAGE
@@ -109,10 +112,15 @@ function wodin_configure_proxy {
             wodin_ssl epimodels
             echo epimodels.dide.ic.ac.uk > .proxy
             ;;
-        *)
+        none)
             echo "Using no proxy"
             rm -rf ssl
             rm -f .proxy
+            ;;
+        *)
+            echo "Invald name for configure-proxy"
+            echo "Should be one of dev|epimodels|none"
+            exit 1
             ;;
     esac
 }
