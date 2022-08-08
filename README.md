@@ -1,10 +1,15 @@
 # WODIN demo
 
-## Automatic deployment on wodin-dev
+## Automatic deployment on wodin-dev or epimodels
+
+First configure the proxy, this only needs doing once:
+
+```
+./wodin-deploy configure-proxy dev # or epimodels
+```
 
 ```
 ./wodin-deploy pull # if needed, pull containers
-./wodin-deploy ssl  # if needed, update proxy ssl key/cert
 ./wodin-deploy down # if needed, stop existing deployment
 ./wodin-deploy up   # bring up the app
 ```
@@ -12,7 +17,8 @@
 ## Deployment for testing, without the proxy
 
 ```
-./wodin-deploy up --no-proxy
+./wodin-deploy configure-proxy none
+./wodin-deploy up
 ```
 
 ## Deploying a different branch
