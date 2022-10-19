@@ -17,6 +17,7 @@ echo "Updating styles"
 sed -i 's/#ce4910/#00a3ba/' $ROOT/config/files/index/index.css
 sed -i 's/localhost:8001/odin.api:8001/' $ROOT/config/wodin.config.json
 sed -i 's/localhost:6379/redis:6379/' $ROOT/config/wodin.config.json
+sed -i 's;http://localhost:3000;https://wodin-dev.dide.ic.ac.uk;' $ROOT/config/wodin.config.json
 cp $ROOT/extra/reside_logo.png $ROOT/config/files/index/reside_logo.png
 
 echo "Done!"
