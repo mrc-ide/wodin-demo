@@ -14,7 +14,7 @@ PROXY_NAME=proxy
 API_IMAGE=mrcide/odin.api:$API_BRANCH
 APP_IMAGE=mrcide/wodin:$APP_BRANCH
 REDIS_IMAGE=redis:6
-PROXY_IMAGE=reside/proxy-nginx:master
+PROXY_IMAGE=ghcr.io/reside-ic/proxy-nginx:latest
 
 REDIS_VOLUME=wodin-data
 
