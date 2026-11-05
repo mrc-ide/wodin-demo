@@ -1,3 +1,5 @@
+This repo has apparently been obsoleted by https://github.com/mrc-ide/wodin-demo-config
+
 # WODIN demo
 
 ## Automatic deployment on wodin-dev or epimodels
